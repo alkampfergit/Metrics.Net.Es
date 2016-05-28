@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Metric.Net.Es", "Metric.Net.Es\Metric.Net.Es.csproj", "{5492399E-42DB-453C-8D91-1F6FECAEAE4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Metrics.Net.Ex.Tests", "Metrics.Net.Ex.Tests\Metrics.Net.Ex.Tests.csproj", "{80C71436-7842-4986-9C38-F750CFFB9145}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5492399E-42DB-453C-8D91-1F6FECAEAE4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5492399E-42DB-453C-8D91-1F6FECAEAE4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5492399E-42DB-453C-8D91-1F6FECAEAE4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5492399E-42DB-453C-8D91-1F6FECAEAE4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80C71436-7842-4986-9C38-F750CFFB9145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80C71436-7842-4986-9C38-F750CFFB9145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80C71436-7842-4986-9C38-F750CFFB9145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80C71436-7842-4986-9C38-F750CFFB9145}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
