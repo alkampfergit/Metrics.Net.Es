@@ -118,6 +118,14 @@ namespace Metrics.Net.Es
                 ""Unit"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}}
             }}
         }},
+        ""CounterDiff"" : {{
+            ""_all"" : {{ ""enabled"" : false }},
+            ""properties"" : {{
+                ""Type"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}},
+                ""Name"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}},
+                ""Unit"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}}
+            }}
+        }},
         ""Histogram"" : {{
             ""_all"" : {{ ""enabled"" : false }},
             ""properties"" : {{

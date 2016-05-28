@@ -31,7 +31,17 @@ namespace Metrics.Net.Ex.Tests
 
         internal JObject[] GetAllCounters(string alias)
         {
-            var url = "http://" + esAddress + ":" + esPort + "/" + alias + "/_search?q=Type:Counter";
+            return GetCounterFromAlias(alias, "Counter");
+        }
+
+        internal JObject[] GetAllCountersDiff(string alias)
+        {
+            return GetCounterFromAlias(alias, "CounterDiff");
+        }
+
+        private JObject[] GetCounterFromAlias(string alias, string type)
+        {
+            var url = "http://" + esAddress + ":" + esPort + "/" + alias + "/_search?q=Type:" + type;
             using (var client = new WebClient())
             {
                 return ParseResult(client.DownloadString(url));

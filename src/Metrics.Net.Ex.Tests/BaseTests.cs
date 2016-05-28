@@ -40,7 +40,6 @@ namespace Metrics.Net.Ex.Tests
         [TearDown]
         public void TearDown()
         {
-            DeleteIndexesByPrefix(prefix);
         }
 
 
@@ -60,6 +59,10 @@ namespace Metrics.Net.Ex.Tests
             var records = base.GetAllCounters("es-test");
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 3));
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 8));
+
+            records = base.GetAllCountersDiff("es-test");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 3));
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 5));
         }
     }
 }

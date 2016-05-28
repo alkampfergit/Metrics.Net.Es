@@ -127,6 +127,8 @@ namespace Metrics.Net.Es
             }
         }
 
+        private Dictionary<String, Int64> CounterLastValue = new Dictionary<string, long>();
+
         protected override void ReportCounter(string name, CounterValue value, Unit unit, MetricTags tags)
         {
             var itemProperties = value.Items.SelectMany(i => (new[]
@@ -137,6 +139,16 @@ namespace Metrics.Net.Es
 
             Pack("Counter", name, unit, tags, new[] {
                 new JsonProperty("Count", value.Count),
+            }.Concat(itemProperties));
+
+            Int64 lastValue;
+            if (!CounterLastValue.TryGetValue(name, out lastValue))
+                lastValue = 0;
+
+            var diffValue = value.Count - lastValue;
+            CounterLastValue[name] = value.Count;
+            Pack("CounterDiff", name, unit, tags, new[] {
+                new JsonProperty("Count", diffValue),
             }.Concat(itemProperties));
         }
 
