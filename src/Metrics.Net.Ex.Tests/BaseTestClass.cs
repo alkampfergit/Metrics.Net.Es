@@ -29,30 +29,31 @@ namespace Metrics.Net.Ex.Tests
             throw new NotImplementedException();
         }
 
-        internal JObject[] GetAllCounters(string alias)
+        internal JObject[] GetAllCounters(string alias, string counterName)
         {
-            return GetCounterFromAlias(alias, "Counter");
+            return GetCounterFromAlias(alias, "Counter", counterName);
         }
 
-        internal JObject[] GetAllCountersDiff(string alias)
+        internal JObject[] GetAllCountersDiff(string alias, string counterName)
         {
-            return GetCounterFromAlias(alias, "CounterDiff");
+            return GetCounterFromAlias(alias, "CounterDiff", counterName);
         }
 
-        private JObject[] GetCounterFromAlias(string alias, string type)
+        private JObject[] GetCounterFromAlias(string alias, string type, string counterName)
         {
             var url = "http://" + esAddress + ":" + esPort + "/" + alias + "/_search?q=Type:" + type;
             using (var client = new WebClient())
             {
-                return ParseResult(client.DownloadString(url));
+                return ParseResult(client.DownloadString(url), counterName);
             }
         }
 
-        internal JObject[] ParseResult(String result)
+        internal JObject[] ParseResult(String result, String counterName)
         {
             JObject jResult = (JObject) JsonConvert.DeserializeObject(result);
             JArray hits = jResult["hits"]["hits"] as JArray;
-            return hits.Select(h => h["_source"] as JObject).ToArray();
+            var allCounterRecord = hits.Select(h => h["_source"] as JObject).ToArray();
+            return allCounterRecord.Where(r => r.Value<String>("Name").EndsWith(counterName)).ToArray();
         }
     }
 }

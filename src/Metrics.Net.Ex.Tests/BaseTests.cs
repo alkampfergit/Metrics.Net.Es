@@ -1,4 +1,6 @@
 ﻿using Metrics.Net.Es;
+using Metrics.Reporters;
+using Metrics.Reports;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ namespace Metrics.Net.Ex.Tests
     {
         private string prefix = "metrics-tests";
         private Action<ElasticSearchReport> sutConfigurer;
+        private MetricsReports reports;
 
         /// <summary>
         /// 
@@ -40,14 +43,17 @@ namespace Metrics.Net.Ex.Tests
         [TearDown]
         public void TearDown()
         {
+            reports.StopAndClearAllReports();
+            reports.Dispose();
         }
 
 
         [Test]
         public void Smoke_test_for_counter()
         {
+
             Metric.Config
-                .WithReporting(r => r.WithElasticSearchReport(
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
                         TimeSpan.FromSeconds(1), sutConfigurer
                     ));
             Counter c = Metric.Counter("test", Unit.Calls);
@@ -56,13 +62,14 @@ namespace Metrics.Net.Ex.Tests
             c.Increment(5);
             Thread.Sleep(2000);
 
-            var records = base.GetAllCounters("es-test");
+            var records = base.GetAllCounters("es-test","test");
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 3));
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 8));
 
-            records = base.GetAllCountersDiff("es-test");
+            records = base.GetAllCountersDiff("es-test", "test");
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 3));
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 5));
         }
+
     }
 }
