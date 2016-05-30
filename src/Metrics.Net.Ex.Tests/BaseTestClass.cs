@@ -48,6 +48,16 @@ namespace Metrics.Net.Ex.Tests
             }
         }
 
+        internal JObject[] GetAllMeter(string alias, string meterName)
+        {
+            return GetCounterFromAlias(alias, "Meter", meterName);
+        }
+
+        internal JObject[] GetAllMeterDiff(string alias, string meterName)
+        {
+            return GetCounterFromAlias(alias, "MeterDiff", meterName);
+        }
+
         internal JObject[] ParseResult(String result, String counterName)
         {
             JObject jResult = (JObject) JsonConvert.DeserializeObject(result);

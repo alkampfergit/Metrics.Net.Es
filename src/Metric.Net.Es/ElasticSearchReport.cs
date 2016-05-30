@@ -146,26 +146,26 @@ namespace Metrics.Net.Es
             if (!CounterLastValue.TryGetValue(name, out lastValue))
                 lastValue = 0;
 
-            var diffValue = value.Count - lastValue;
             CounterLastValue[name] = value.Count;
 
             var itemPropertiesDiff = value.Items.SelectMany(i =>
             {
                 var pName = SanitizeJsonPropertyName(i.Item);
                 var itemPropName = name + "-" + pName;
-                if (!CounterPropertiesLastValue.TryGetValue(itemPropName, out lastValue))
+                Int64 pLastValue;
+                if (!CounterPropertiesLastValue.TryGetValue(itemPropName, out pLastValue))
                     lastValue = 0;
                 CounterPropertiesLastValue[itemPropName] = i.Count;
 
                 var item = (new[]
                 {
-                    new JsonProperty(pName+ "-Count", i.Count - lastValue)
+                    new JsonProperty(pName+ "-Count", i.Count - pLastValue)
                 });
                 return item;
             });
 
             Pack("CounterDiff", name, unit, tags, new[] {
-                new JsonProperty("Count", diffValue),
+                new JsonProperty("Count", value.Count - lastValue),
             }.Concat(itemPropertiesDiff));
         }
 
@@ -174,16 +174,24 @@ namespace Metrics.Net.Es
             return name.Replace('.', '_');
         }
 
+        private Dictionary<String, Int64> MeterLastValue = new Dictionary<string, long>();
+        private Dictionary<String, Int64> MeterPropertiesLastValue = new Dictionary<string, long>();
+
+
         protected override void ReportMeter(string name, MeterValue value, Unit unit, TimeUnit rateUnit, MetricTags tags)
         {
-            var itemProperties = value.Items.SelectMany(i => new[]
+            var itemProperties = value.Items.SelectMany(i =>
             {
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-Count", i.Value.Count),
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-Percent", i.Percent),
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-Mean Rate", i.Value.MeanRate),
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-1 Min Rate", i.Value.OneMinuteRate),
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-5 Min Rate", i.Value.FiveMinuteRate),
-                new JsonProperty(SanitizeJsonPropertyName(i.Item) + "-15 Min Rate", i.Value.FifteenMinuteRate)
+                var pName = SanitizeJsonPropertyName(i.Item);
+                return new[]
+                {
+                    new JsonProperty(pName + "-Count", i.Value.Count),
+                    new JsonProperty(pName + "-Percent", i.Percent),
+                    new JsonProperty(pName + "-Mean Rate", i.Value.MeanRate),
+                    new JsonProperty(pName + "-1 Min Rate", i.Value.OneMinuteRate),
+                    new JsonProperty(pName + "-5 Min Rate", i.Value.FiveMinuteRate),
+                    new JsonProperty(pName + "-15 Min Rate", i.Value.FifteenMinuteRate)
+                };
             });
 
             Pack("Meter", name, unit, tags, new[] {
@@ -193,11 +201,36 @@ namespace Metrics.Net.Es
                 new JsonProperty("5-Min-Rate", value.FiveMinuteRate),
                 new JsonProperty("15-Min-Rate", value.FifteenMinuteRate)
             }.Concat(itemProperties));
+
+
+            Int64 lastValue;
+            if (!MeterLastValue.TryGetValue(name, out lastValue))
+                lastValue = 0;
+            MeterLastValue[name] = value.Count;
+
+
+            var itemPropertiesDiff = value.Items.SelectMany(i =>
+            {
+                var pName = SanitizeJsonPropertyName(i.Item);
+                var itemPropName = name + "-" + pName;
+                Int64 pLastValue;
+                if (!MeterPropertiesLastValue.TryGetValue(itemPropName, out pLastValue))
+                    lastValue = 0;
+                MeterPropertiesLastValue[itemPropName] = i.Value.Count;
+                return new[]
+                {
+                    new JsonProperty(pName + "-Count", i.Value.Count - pLastValue)
+                };
+            });
+
+            Pack("MeterDiff", name, unit, tags, new[] {
+                new JsonProperty("Count", value.Count - lastValue)
+            }.Concat(itemPropertiesDiff));
         }
 
-        protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
-        {
-            Pack("Histogram", name, unit, tags, new[] {
+protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
+{
+    Pack("Histogram", name, unit, tags, new[] {
                 new JsonProperty("Total-Count",value.Count),
                 new JsonProperty("Last", value.LastValue),
                 new JsonProperty("Last-User-Value", value.LastUserValue),
@@ -215,11 +248,11 @@ namespace Metrics.Net.Es
                 new JsonProperty("Percentile-99_9" ,value.Percentile999),
                 new JsonProperty("Sample-Size", value.SampleSize)
             });
-        }
+}
 
-        protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
-        {
-            Pack("Timer", name, unit, tags, new[] {
+protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+{
+    Pack("Timer", name, unit, tags, new[] {
                 new JsonProperty("Total-Count",value.Rate.Count),
                 new JsonProperty("Active-Sessions",value.ActiveSessions),
                 new JsonProperty("Mean-Rate", value.Rate.MeanRate),
@@ -242,31 +275,31 @@ namespace Metrics.Net.Es
                 new JsonProperty("Percentile-99_9" ,value.Histogram.Percentile999),
                 new JsonProperty("Sample-Size", value.Histogram.SampleSize)
             });
-        }
+}
 
-        protected override void ReportHealth(HealthStatus status)
-        {
-        }
+protected override void ReportHealth(HealthStatus status)
+{
+}
 
-        protected override void StartContext(string contextName)
-        {
-            base.StartContext(contextName);
-        }
+protected override void StartContext(string contextName)
+{
+    base.StartContext(contextName);
+}
 
-        protected override void EndContext(string contextName)
-        {
-            base.EndContext(contextName);
-        }
+protected override void EndContext(string contextName)
+{
+    base.EndContext(contextName);
+}
 
-        protected override void StartMetricGroup(string metricName)
-        {
-            base.StartMetricGroup(metricName);
-        }
+protected override void StartMetricGroup(string metricName)
+{
+    base.StartMetricGroup(metricName);
+}
 
-        protected override void EndMetricGroup(string metricName)
-        {
-            base.EndMetricGroup(metricName);
-        }
+protected override void EndMetricGroup(string metricName)
+{
+    base.EndMetricGroup(metricName);
+}
         #endregion  
     }
 }

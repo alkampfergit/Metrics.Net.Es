@@ -99,5 +99,72 @@ namespace Metrics.Net.Ex.Tests
             Assert.That(lastRecord.Value<Int32>("item1-Count"), Is.EqualTo(5));
             Assert.That(lastRecord.Value<Int32>("item3-Count"), Is.EqualTo(7));
         }
+
+        [Test]
+        public void Smoke_test_for_meters()
+        {
+            Metric.Config
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
+                        TimeSpan.FromSeconds(1), sutConfigurer
+                    ));
+            Meter meter = Metric.Meter("test1", Unit.Calls, TimeUnit.Milliseconds);
+
+            meter.Mark();
+            Thread.Sleep(3000);
+            var records = base.GetAllMeter("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 1));
+
+            records = base.GetAllMeterDiff("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 1));
+
+            meter.Mark();
+            Thread.Sleep(2000);
+            records = base.GetAllMeter("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 2));
+
+            records = base.GetAllMeterDiff("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 1));
+        }
+
+        [Test]
+        public void Smoke_test_for_meters_with_context()
+        {
+            Metric.Config
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
+                        TimeSpan.FromSeconds(1), sutConfigurer
+                    ));
+            Meter meter = Metric.Meter("test2", Unit.Calls, TimeUnit.Milliseconds);
+
+            meter.Mark("item1");
+            meter.Mark("item2", 2);
+            Thread.Sleep(3000);
+
+            var records = base.GetAllMeter("es-test", "test2");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 3));
+            Assert.That(records.Any(r => r.Value<Int32>("item1-Count") == 1));
+            Assert.That(records.Any(r => r.Value<Int32>("item2-Count") == 2));
+
+            //Delete index
+            DeleteIndexesByPrefix(prefix);
+
+            meter.Mark("item1", 3);
+            meter.Mark("item3", 2);
+            Thread.Sleep(3000);
+
+            records = base.GetAllMeter("es-test", "test2");
+            var record = records.First(r => r.Value<Int32>("Count") == 8);
+           
+            Assert.That(record.Value<Int32>("item1-Count"), Is.EqualTo(4));
+            Assert.That(record.Value<Int32>("item3-Count"), Is.EqualTo(2));
+            Assert.That(record.Value<Int32>("item2-Count"), Is.EqualTo(2));
+
+            records = base.GetAllMeterDiff("es-test", "test2");
+            record = records.Single(r => r.Value<Int32>("Count") == 5);
+
+            Assert.That(record.Value<Int32>("item1-Count"), Is.EqualTo(3));
+            Assert.That(record.Value<Int32>("item3-Count"), Is.EqualTo(2));
+            Assert.That(record.Value<Int32>("item2-Count"), Is.EqualTo(0));
+        }
+
     }
 }

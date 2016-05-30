@@ -102,6 +102,14 @@ namespace Metrics.Net.Es
                 ""Unit"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}}
             }}
         }},
+        ""MeterDiff"" : {{
+            ""_all"" : {{ ""enabled"" : false }},
+            ""properties"" : {{
+                ""Type"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}},
+                ""Name"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}},
+                ""Unit"" : {{ ""type"" : ""string"", ""index"": ""not_analyzed""}}
+            }}
+        }},
         ""Gauge"" : {{
             ""_all"" : {{ ""enabled"" : false }},
             ""properties"" : {{
