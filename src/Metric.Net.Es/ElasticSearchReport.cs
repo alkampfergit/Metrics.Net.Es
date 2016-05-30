@@ -128,6 +128,7 @@ namespace Metrics.Net.Es
         }
 
         private Dictionary<String, Int64> CounterLastValue = new Dictionary<string, long>();
+        private Dictionary<String, Int64> CounterPropertiesLastValue = new Dictionary<string, long>();
 
         protected override void ReportCounter(string name, CounterValue value, Unit unit, MetricTags tags)
         {
@@ -147,9 +148,25 @@ namespace Metrics.Net.Es
 
             var diffValue = value.Count - lastValue;
             CounterLastValue[name] = value.Count;
+
+            var itemPropertiesDiff = value.Items.SelectMany(i =>
+            {
+                var pName = SanitizeJsonPropertyName(i.Item);
+                var itemPropName = name + "-" + pName;
+                if (!CounterPropertiesLastValue.TryGetValue(itemPropName, out lastValue))
+                    lastValue = 0;
+                CounterPropertiesLastValue[itemPropName] = i.Count;
+
+                var item = (new[]
+                {
+                    new JsonProperty(pName+ "-Count", i.Count - lastValue)
+                });
+                return item;
+            });
+
             Pack("CounterDiff", name, unit, tags, new[] {
                 new JsonProperty("Count", diffValue),
-            }.Concat(itemProperties));
+            }.Concat(itemPropertiesDiff));
         }
 
         private static string SanitizeJsonPropertyName(String name)

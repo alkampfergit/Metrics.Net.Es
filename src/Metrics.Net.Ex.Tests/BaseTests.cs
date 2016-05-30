@@ -71,5 +71,33 @@ namespace Metrics.Net.Ex.Tests
             Assert.That(records.Any(r => r.Value<Int32>("Count") == 5));
         }
 
+        [Test]
+        public void Smoke_test_for_counter_with_context()
+        {
+
+            Metric.Config
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
+                        TimeSpan.FromSeconds(1), sutConfigurer
+                    ));
+            Counter c = Metric.Counter("test1", Unit.Calls);
+            c.Increment("item1", 3);
+            c.Increment("item2", 4);
+            Thread.Sleep(2000);
+            c.Increment("item1", 5);
+            c.Increment("item3", 7);
+            Thread.Sleep(2000);
+
+            var records = base.GetAllCounters("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 7));
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 19));
+
+            records = base.GetAllCountersDiff("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 7));
+            Assert.That(records.Any(r => r.Value<Int32>("Count") == 12));
+
+            var lastRecord = records.Single(r => r.Value<Int32>("Count") == 12);
+            Assert.That(lastRecord.Value<Int32>("item1-Count"), Is.EqualTo(5));
+            Assert.That(lastRecord.Value<Int32>("item3-Count"), Is.EqualTo(7));
+        }
     }
 }
