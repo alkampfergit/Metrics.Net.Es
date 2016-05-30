@@ -16,7 +16,9 @@ namespace Metrics.Net.Es
 
         private String _indexPrefix;
 
-        public ElasticSearchHelper(String hostname, Int32 port, String indexPrefix)
+        private String _indexSuffixDateTimeFormat;
+
+        public ElasticSearchHelper(String hostname, Int32 port, String indexPrefix, String indexSuffixDateTimeFormat)
         {
             _hostName = hostname;
             if (!_hostName.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -25,7 +27,10 @@ namespace Metrics.Net.Es
             }
             _port = port;
             _indexPrefix = indexPrefix;
+            _indexSuffixDateTimeFormat = indexSuffixDateTimeFormat;
         }
+
+
 
         public void CreateTemplate(String indexPrefix, IEnumerable<String> aliases, String templateName)
         {
@@ -50,7 +55,7 @@ namespace Metrics.Net.Es
 
         internal String GetCurrentIndexName(DateTime timestamp)
         {
-            return String.Format("{0}-{1}", _indexPrefix, timestamp.ToString("yyyyMM"));
+            return String.Format("{0}-{1}", _indexPrefix, timestamp.ToString(_indexSuffixDateTimeFormat));
         }
 
         #region Helpers

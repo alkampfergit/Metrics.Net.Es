@@ -18,6 +18,7 @@ namespace Metrics.Net.Ex.Tests
         private string prefix = "metrics-tests";
         private Action<ElasticSearchReport> sutConfigurer;
         private MetricsReports reports;
+        private ElasticSearchReport esReport;
 
         /// <summary>
         /// 
@@ -33,10 +34,11 @@ namespace Metrics.Net.Ex.Tests
         public void SetUp()
         {
             DeleteIndexesByPrefix(prefix);
-            sutConfigurer = r => r
+            sutConfigurer = r => esReport = r
                 .HostName(base.esAddress)
                 .HostPort(base.esPort)
                 .AddAlias("es-test")
+                .SetIndexSuffixDateTimeFormat("yyyyMMdd")
                 .WithIndexPrefix(prefix);
         }
 
@@ -45,6 +47,7 @@ namespace Metrics.Net.Ex.Tests
         {
             reports.StopAndClearAllReports();
             reports.Dispose();
+            esReport.Dispose();
         }
 
 

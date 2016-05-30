@@ -11,11 +11,13 @@ using System.Text;
 
 namespace Metrics.Net.Es
 {
-    public class ElasticSearchReport : BaseReport
+    public class ElasticSearchReport : BaseReport, IDisposable
     {
         private String _hostName;
         private String _indexPrefix = "MetricsReports";
         private Int32 _port = 9200;
+        private String _indexSuffixDateTimeFormat = "yyyyMM";
+
         private List<String> _aliases = new List<string>();
 
         private ElasticSearchHelper _esHelper;
@@ -54,7 +56,7 @@ namespace Metrics.Net.Es
 
         internal void Init()
         {
-            _esHelper = new ElasticSearchHelper(_hostName, _port, _indexPrefix);
+            _esHelper = new ElasticSearchHelper(_hostName, _port, _indexPrefix, _indexSuffixDateTimeFormat);
             _esHelper.CreateTemplate(_indexPrefix, _aliases, "metricsDotNetTemplate");
         }
 
@@ -85,6 +87,12 @@ namespace Metrics.Net.Es
             return this;
         }
 
+        public ElasticSearchReport SetIndexSuffixDateTimeFormat(String format)
+        {
+            _indexSuffixDateTimeFormat = format;
+            return this;
+        }
+
         #endregion
 
         #region Reporting 
@@ -98,6 +106,7 @@ namespace Metrics.Net.Es
         protected override void EndReport(string contextName)
         {
             base.EndReport(contextName);
+            if (_isDisposed) return;
             _esHelper.IndexData(data);
         }
 
@@ -119,6 +128,7 @@ namespace Metrics.Net.Es
 
         protected override void ReportGauge(string name, double value, Unit unit, MetricTags tags)
         {
+            if (_isDisposed) return;
             if (!double.IsNaN(value) && !double.IsInfinity(value))
             {
                 Pack("Gauge", name, unit, tags, new[] {
@@ -132,6 +142,7 @@ namespace Metrics.Net.Es
 
         protected override void ReportCounter(string name, CounterValue value, Unit unit, MetricTags tags)
         {
+            if (_isDisposed) return;
             var itemProperties = value.Items.SelectMany(i => (new[]
             {
                 new JsonProperty(SanitizeJsonPropertyName(i.Item)+ "-Count", i.Count),
@@ -180,6 +191,7 @@ namespace Metrics.Net.Es
 
         protected override void ReportMeter(string name, MeterValue value, Unit unit, TimeUnit rateUnit, MetricTags tags)
         {
+            if (_isDisposed) return;
             var itemProperties = value.Items.SelectMany(i =>
             {
                 var pName = SanitizeJsonPropertyName(i.Item);
@@ -228,9 +240,10 @@ namespace Metrics.Net.Es
             }.Concat(itemPropertiesDiff));
         }
 
-protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
-{
-    Pack("Histogram", name, unit, tags, new[] {
+        protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
+        {
+            if (_isDisposed) return;
+            Pack("Histogram", name, unit, tags, new[] {
                 new JsonProperty("Total-Count",value.Count),
                 new JsonProperty("Last", value.LastValue),
                 new JsonProperty("Last-User-Value", value.LastUserValue),
@@ -248,11 +261,12 @@ protected override void ReportHistogram(string name, HistogramValue value, Unit 
                 new JsonProperty("Percentile-99_9" ,value.Percentile999),
                 new JsonProperty("Sample-Size", value.SampleSize)
             });
-}
+        }
 
-protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
-{
-    Pack("Timer", name, unit, tags, new[] {
+        protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+        {
+            if (_isDisposed) return;
+            Pack("Timer", name, unit, tags, new[] {
                 new JsonProperty("Total-Count",value.Rate.Count),
                 new JsonProperty("Active-Sessions",value.ActiveSessions),
                 new JsonProperty("Mean-Rate", value.Rate.MeanRate),
@@ -275,31 +289,46 @@ protected override void ReportTimer(string name, TimerValue value, Unit unit, Ti
                 new JsonProperty("Percentile-99_9" ,value.Histogram.Percentile999),
                 new JsonProperty("Sample-Size", value.Histogram.SampleSize)
             });
-}
+        }
 
-protected override void ReportHealth(HealthStatus status)
-{
-}
+        protected override void ReportHealth(HealthStatus status)
+        {
+            if (_isDisposed) return;
+        }
 
-protected override void StartContext(string contextName)
-{
-    base.StartContext(contextName);
-}
+        protected override void StartContext(string contextName)
+        {
+            base.StartContext(contextName);
+        }
 
-protected override void EndContext(string contextName)
-{
-    base.EndContext(contextName);
-}
+        protected override void EndContext(string contextName)
+        {
+            base.EndContext(contextName);
+        }
 
-protected override void StartMetricGroup(string metricName)
-{
-    base.StartMetricGroup(metricName);
-}
+        protected override void StartMetricGroup(string metricName)
+        {
+            base.StartMetricGroup(metricName);
+        }
 
-protected override void EndMetricGroup(string metricName)
-{
-    base.EndMetricGroup(metricName);
-}
-        #endregion  
+        protected override void EndMetricGroup(string metricName)
+        {
+            base.EndMetricGroup(metricName);
+        }
+
+        private Boolean _isDisposed;
+        protected void Dispose(Boolean isDisposing)
+        {
+            if (_isDisposed) return;
+            _isDisposed = true;
+            
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        #endregion
     }
 }
