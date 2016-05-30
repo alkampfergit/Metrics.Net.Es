@@ -166,5 +166,49 @@ namespace Metrics.Net.Ex.Tests
             Assert.That(record.Value<Int32>("item2-Count"), Is.EqualTo(0));
         }
 
+        [Test]
+        public void Smoke_test_for_histogram()
+        {
+            Metric.Config
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
+                        TimeSpan.FromSeconds(1), sutConfigurer
+                    ));
+            Histogram histogram = Metric.Histogram("test1", Unit.Bytes);
+
+            histogram.Update(2);
+            Thread.Sleep(3000);
+            var records = base.GetAllHistogram("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Last") == 2));
+            Assert.That(records.Any(r => r.Value<Int32>("Total-Count") == 1));
+
+            histogram.Update(3);
+            Thread.Sleep(3000);
+
+            records = base.GetAllHistogram("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Last") == 3));
+            Assert.That(records.Any(r => r.Value<Int32>("Total-Count") == 2));
+
+        }
+
+        [Test]
+        public void Smoke_test_for_histogram_accumulate()
+        {
+            Metric.Config
+                .WithReporting(r => (reports = r).WithElasticSearchReport(
+                        TimeSpan.FromSeconds(1), sutConfigurer
+                    ));
+            Histogram histogram = Metric.Histogram("test1", Unit.Bytes);
+
+            histogram.Update(2);
+            histogram.Update(10);
+            histogram.Update(4);
+            Thread.Sleep(3000);
+            var records = base.GetAllHistogram("es-test", "test1");
+            Assert.That(records.Any(r => r.Value<Int32>("Last") == 4));
+            Assert.That(records.Any(r => r.Value<Int32>("Min") == 2));
+            Assert.That(records.Any(r => r.Value<Int32>("Max") == 10));
+            Assert.That(records.Any(r => r.Value<Int32>("Total-Count") == 3));
+        }
+
     }
 }

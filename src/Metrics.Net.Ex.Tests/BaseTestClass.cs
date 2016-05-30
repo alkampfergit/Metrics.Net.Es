@@ -58,6 +58,17 @@ namespace Metrics.Net.Ex.Tests
             return GetCounterFromAlias(alias, "MeterDiff", meterName);
         }
 
+
+        internal JObject[] GetAllHistogram(string alias, string meterName)
+        {
+            return GetCounterFromAlias(alias, "Histogram", meterName);
+        }
+
+        internal JObject[] GetAllHistogramDiff(string alias, string meterName)
+        {
+            return GetCounterFromAlias(alias, "HistogramDiff", meterName);
+        }
+
         internal JObject[] ParseResult(String result, String counterName)
         {
             JObject jResult = (JObject) JsonConvert.DeserializeObject(result);
